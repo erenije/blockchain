@@ -37,7 +37,7 @@ contract Test
         string phoneNumber;
     }
     
-    mapping(address => Employee) private employees;
+    mapping(string => Employee) private employees;
     mapping(address => Owner) private owners;
     mapping(address => Request) private requests;
     mapping(string => Home) private homes;
@@ -52,5 +52,15 @@ contract Test
     }
     function GetHome(string memory adr) public returns (uint _area, uint _cost){
         return (homes[adr].area, homes[adr].cost);
+    }
+    function AddEmployee(string memory _nameEmployee, string memory _position, string memory _phoneNumber) public{
+        Employee memory d;
+        d.nameEmployee = _nameEmployee;
+        d.position = _position;
+        d.phoneNumber = _phoneNumber;
+        employees[_nameEmployee] = d;
+    }
+    function GetEmployee(string memory nameEmployee) public returns (string memory _position, string memory _phoneNumber){
+        return (employees[nameEmployee].position, employees[nameEmployee].phoneNumber);
     }
 }
