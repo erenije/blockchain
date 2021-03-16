@@ -1,4 +1,24 @@
-contract Test
+contract Owned{
+    address private owner;
+    constructor(){
+        owner = msg.sender;
+    }
+    modifier OnlyOwner{
+        require(
+            msg.sender == owner,
+            'Only owner can run this function'
+            );
+        _;
+    }
+    function ChangeOwner(address newOwner) public OnlyOwner{
+        owner = newOwner;
+    }
+    function GetOwner() public returns (address){
+        return owner;
+    }
+}
+
+contract Test is Owned
 {
     enum RequestType{NewHome, EditHome}
     
@@ -37,7 +57,7 @@ contract Test
         string phoneNumber;
     }
     
-    mapping(string => Employee) private employees;
+    mapping(address => Employee) private employees;
     mapping(address => Owner) private owners;
     mapping(address => Request) private requests;
     mapping(string => Home) private homes;
@@ -50,17 +70,27 @@ contract Test
         h.cost = _cost;
         homes[_adr] = h;
     }
+    
     function GetHome(string memory adr) public returns (uint _area, uint _cost){
         return (homes[adr].area, homes[adr].cost);
     }
-    function AddEmployee(string memory _nameEmployee, string memory _position, string memory _phoneNumber) public{
+    
+    function AddEmployee(address empl, string memory _nameEmployee, string memory _position, string memory _phoneNumber) public OnlyOwner{
         Employee memory d;
         d.nameEmployee = _nameEmployee;
         d.position = _position;
         d.phoneNumber = _phoneNumber;
-        employees[_nameEmployee] = d;
+        employees[empl] = d;
     }
-    function GetEmployee(string memory nameEmployee) public returns (string memory _position, string memory _phoneNumber){
-        return (employees[nameEmployee].position, employees[nameEmployee].phoneNumber);
+    
+    function EditEmployee(address empl, string memory _nameEmployee, string memory _position, string memory _phoneNumber) public OnlyOwner{
+        employees[empl].nameEmployee = _nameEmployee;
+        employees[empl].position = _position;
+        employees[empl].phoneNumber = _phoneNumber;
     }
+    
+    function GetEmployee(address empl) public OnlyOwner returns (string memory _nameEmployee, string memory _position, string memory _phoneNumber){
+        return (employees[empl].nameEmployee, employees[empl].position, employees[empl].phoneNumber);
+    }
+    
 }
