@@ -1,10 +1,10 @@
-pragma solidity >=0.4.22;
+pragma solidity >=0.6.0 <=0.8.3;
 pragma experimental ABIEncoderV2;
 
 contract Owned{
     address payable private owner;
     constructor(){
-        owner = msg.sender;
+        owner = payable(msg.sender);
     }
     modifier OnlyOwner{
         require(
@@ -24,6 +24,7 @@ contract Owned{
 contract Test is Owned
 {
     enum RequestType{NewHome, EditHome}
+    enum OwnerOperation {Add, Edit, Delete}
     uint private price = 100 wei;
     
     struct Ownership
@@ -39,6 +40,7 @@ contract Test is Owned
         uint passNum;
         uint256 date;
         string phoneNumber;
+        bool isset;
     }
     
     struct Home
@@ -46,10 +48,12 @@ contract Test is Owned
         string homeAddress;
         uint area;
         uint cost;
+        bool isset;
     }
     struct Request
     {
         RequestType requestType;
+        OwnerOperation operation;
         string homeAddress;
         uint area;
         uint result;
@@ -69,7 +73,9 @@ contract Test is Owned
     mapping(address => Owner) private owners;
     mapping(address => Request) private requests;
     address[] requestInitiator;
+    address[] ownersArray;
     mapping(string => Home) private homes;
+    string[] addresses;
     mapping(string => Ownership[]) private ownerships;
     
     uint private amount;
@@ -158,9 +164,30 @@ contract Test is Owned
         return (ids, types, homeAddresses);
     }
     
-    function ProcessedRequest(address _requestInitiator) public OnlyOwner returns (bool)
-    {
-        
+ function ProcessRequest(uint Id) public OnlyEmployee returns (uint){
+        if(Id<0 || Id>=requestInitiator.length) return 1;
+        Request memory r = requests[requestInitiator[Id]];
+        if(r.requestType == RequestType.NewHome && homes[r.homeAddress].isset){
+            delete requests[requestInitiator[Id]];
+            delete requestInitiator[Id];
+            return 2;
+        } 
+        if(r.requestType == RequestType.NewHome){
+            //add new Home
+            AddHome(r.homeAddress, r.area, r.cost);
+            //set ownership
+            Ownership memory ownership;
+            ownership.homeAddress = r.homeAddress;
+            ownership.owner = requestInitiator[Id];
+            ownership.p = 1;
+            ownerships[r.homeAddress].push(ownership);
+        } else {
+            //edit home
+            //change ownership
+        }
+        delete requests[requestInitiator[Id]];
+        delete requestInitiator[Id];
+        return 0;
     }
     
     function EditCost(uint _price) public OnlyOwner
