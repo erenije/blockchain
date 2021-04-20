@@ -74,6 +74,8 @@ contract Test is Owned
     mapping(address => Request) private requests;
     address[] requestInitiator;
     address[] ownersArray;
+    address[] listHomeInitiator;
+    mapping(address => Home) private homess;
     mapping(string => Home) private homes;
     string[] addresses;
     mapping(string => Ownership[]) private ownerships;
@@ -102,7 +104,10 @@ contract Test is Owned
         h.homeAddress = _adr;
         h.area = _area;
         h.cost = _cost;
+        homess[msg.sender] = h;
         homes[_adr] = h;
+        listHomeInitiator.push(msg.sender);
+        addresses.push(_adr);
     }
     
     function GetHome(string memory adr) public returns (uint _area, uint _cost){
@@ -164,7 +169,20 @@ contract Test is Owned
         return (ids, types, homeAddresses);
     }
     
- function ProcessRequest(uint Id) public OnlyEmployee returns (uint){
+     function GetListHome() public view returns (uint[] memory, uint[] memory, string[] memory)
+    {
+        uint[] memory costss = new uint[](listHomeInitiator.length);
+        uint[] memory areas = new uint[](listHomeInitiator.length);
+        string[] memory homeAddresses = new string[](listHomeInitiator.length);
+        for(uint i=0;i!=listHomeInitiator.length;i++){
+            costss[i] = homess[listHomeInitiator[i]].cost;
+            areas[i] = homess[listHomeInitiator[i]].area;
+            homeAddresses[i] = homess[listHomeInitiator[i]].homeAddress;
+        }
+        return (costss, areas, homeAddresses);
+    }
+    
+    function ProcessRequest(uint Id) public OnlyEmployee returns (uint){
         if(Id<0 || Id>=requestInitiator.length) return 1;
         Request memory r = requests[requestInitiator[Id]];
         if(r.requestType == RequestType.NewHome && homes[r.homeAddress].isset){
@@ -200,4 +218,34 @@ contract Test is Owned
         return price;
     }
  
+    function AddOwnership(string memory _homeAddr, address _owner, uint _p) public{
+        Ownership memory o;
+        o.homeAddress = _homeAddr;
+        o.owner = _owner;
+        o.p = _p;
+        ownerships[_homeAddr].push(o);
+    }
+    
+    function DeleteOwnership(string memory _homeAddr, address _owner) public {
+        uint len = ownerships[_homeAddr].length;
+        uint temp;
+        for(uint i=0; i!= ownerships[_homeAddr].length; i++){
+            if(ownerships[_homeAddr][i].owner == _owner){
+                temp = i;
+            }
+        }
+        if(temp != ownerships[_homeAddr].length - 1){
+            ownerships[_homeAddr][temp];
+        }
+    }
+    
+    function GetOwnership(string memory _homeAddr) public returns (uint[] memory, address[] memory){
+        uint[] memory Op = new uint[](ownerships[_homeAddr].length);
+        address[] memory Oowner = new address[](ownerships[_homeAddr].length);
+        for(uint i=0; i!= ownerships[_homeAddr].length; i++){
+            Op[i] = ownerships[_homeAddr][i].p;
+            Oowner[i] = ownerships[_homeAddr][i].owner;
+        }
+        return (Op, Oowner);
+    }
 }
